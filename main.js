@@ -88,51 +88,63 @@ async function buildGraph() {
       labels: days,
       datasets: datasets
     },
+ // ... rest of your code remains the same ...
+
+chart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: days,
+        datasets: datasets
+    },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
 
-      title: {
-        display: true,
-        text: "Soil Sensor Data (Daily Average)",
-        fontSize: 12,
-        padding: 4
-      },
+        // FIXED: Title should be configured like this in Chart.js v2
+        title: {
+            display: true,
+            text: "Soil Sensor Data (Daily Average)",
+            fontSize: 12,
+            padding: 4
+        },
 
-      legend: {
-        display: true,
-        position: "top",
-        labels: {
-          boxWidth: 10,
-          fontSize: 10
+        legend: {
+            display: true,
+            position: "top",
+            labels: {
+                boxWidth: 10,
+                fontSize: 10
+            }
+        },
+
+        scales: {
+            xAxes: [{
+                scaleLabel: {
+                    display: true,
+                    labelString: "Day of the Month",
+                    fontSize: 10
+                },
+                ticks: {
+                    fontSize: 9,
+                    maxTicksLimit: 10
+                }
+            }],
+            yAxes: [{
+                scaleLabel: {
+                    display: true,
+                    labelString: "Sensor Value",
+                    fontSize: 10
+                },
+                ticks: {
+                    fontSize: 9
+                }
+            }]
         }
-      },
-
-      scales: {
-        xAxes: [{
-          scaleLabel: {
-            display: true,
-            labelString: "Day of the Month",
-            fontSize: 10
-          },
-          ticks: {
-            fontSize: 9,
-            maxTicksLimit: 10
-          }
-        }],
-        yAxes: [{
-          scaleLabel: {
-            display: true,
-            labelString: "Sensor Value",
-            fontSize: 10
-          },
-          ticks: {
-            fontSize: 9
-          }
-        }]
-      }
     }
-  });
+});
+
+// ... rest of your code ...
 }
 
 buildGraph();
+
