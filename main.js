@@ -32,12 +32,11 @@ async function processGraphData() {
   const nodes = await getAllNodeData();
   const monthData = {};
 
-  for (let nodeName in nodes) {
-    const node = nodes[nodeName];
-    if (!node.Packets) continue;
+  for (let node in nodes) {
+    if (!nodes[node].Packets) continue;
 
-    for (let t in node.Packets) {
-      const p = node.Packets[t];
+    for (let k in nodes[node].Packets) {
+      const p = nodes[node].Packets[k];
       if (!p.timestamp) continue;
 
       const d = new Date(p.timestamp);
@@ -65,79 +64,75 @@ async function buildGraph() {
 
   const datasets = elements.map((el, i) => {
     const offset = i * verticalSeparation;
-
     return {
       label: el,
-      data: days.map(day => {
-        const v = data[day]?.[el];
-        if (!v || v.length === 0) return null;
-        return (v.reduce((a,b)=>a+b,0) / v.length) + offset;
+      data: days.map(d => {
+        const v = data[d]?.[el];
+        if (!v) return null;
+        return v.reduce((a,b)=>a+b,0)/v.length + offset;
       }),
       borderColor: colorMap[el] || "#000",
-      borderWidth: 2,
-      tension: 0.25,
-      spanGaps: true,
-      pointRadius: 0
+      fill: false,
+      lineTension: 0.25,
+      pointRadius: 0,
+      spanGaps: true
     };
   });
 
-  const ctx = document.getElementById("myChart");
-
+  const ctx = document.getElementById("myChart").getContext("2d");
   if (chart) chart.destroy();
 
   chart = new Chart(ctx, {
     type: "line",
-    data: { labels: days, datasets },
-  options: {
-  responsive: true,
-  maintainAspectRatio: false,
+    data: {
+      labels: days,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
 
-  title: {                     // ✅ V2 CORRECT LOCATION
-    display: true,
-    text: "Soil Sensor Data (Daily Average)",
-    fontSize: 12,
-    padding: 6
-  },
+      title: {
+        display: true,
+        text: "Soil Sensor Data (Daily Average)",
+        fontSize: 12,
+        padding: 4
+      },
 
-  legend: {
-    display: true,
-    position: "top",
-    labels: {
-      boxWidth: 10,
-      fontSize: 10
+      legend: {
+        display: true,
+        position: "top",
+        labels: {
+          boxWidth: 10,
+          fontSize: 10
+        }
+      },
+
+      scales: {
+        xAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: "Day of the Month",
+            fontSize: 10
+          },
+          ticks: {
+            fontSize: 9,
+            maxTicksLimit: 10
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: "Sensor Value",
+            fontSize: 10
+          },
+          ticks: {
+            fontSize: 9
+          }
+        }]
+      }
     }
-  },
-
-  scales: {
-    xAxes: [{
-      scaleLabel: {            // ✅ V2 X AXIS TITLE
-        display: true,
-        labelString: "Day of the Month",
-        fontSize: 10
-      },
-      ticks: {
-        fontSize: 9,
-        maxTicksLimit: 10
-      }
-    }],
-    yAxes: [{
-      scaleLabel: {            // ✅ V2 Y AXIS TITLE
-        display: true,
-        labelString: "Sensor Value",
-        fontSize: 10
-      },
-      ticks: {
-        fontSize: 9
-      }
-    }]
-  }
-}
-
-
   });
 }
 
 buildGraph();
-
-
-
