@@ -1,18 +1,17 @@
 html, body {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
 }
 
 .chart-container {
-    height: 230px;
-    width: 100%;
-    padding: 4px;
-    box-sizing: border-box;
+  height: 230px;
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 canvas {
-    height: 100% ;
-    width: 100% ;
+  width: 100% !important;
+  height: 100% !important;
 }
-
