@@ -1,21 +1,15 @@
-// --------------------
-// URL Parameters
-// --------------------
 const url = new URL(window.location.href);
 const user = url.searchParams.get("user");
 const month = url.searchParams.get("month");
-const elements = url.searchParams.get("elements")?.split(",").map(e => e.trim().toLowerCase()) || [];
+const elements = url.searchParams.get("elements")?.split(",") || [];
 
-// Firebase URL
 const firebaseBase =
   "https://soilbitchina-default-rtdb.firebaseio.com/Users/" +
   user +
   "/Farm/Nodes";
 
-// Chart instance
 let chart;
 
-// Fixed colors per element
 const colorMap = {
   moisture: "#1E88E5",
   ph: "#D81B60",
@@ -27,122 +21,101 @@ const colorMap = {
   salinity: "#5D4037"
 };
 
-// Vertical separation constant (adjust to make lines more separated)
-const verticalSeparation = 0.5;
+const verticalSeparation = 0.6;
 
-// --------------------
-// Fetch all nodes for selected user
-// --------------------
 async function getAllNodeData() {
   const res = await fetch(firebaseBase + ".json");
-  const data = await res.json();
-  return data || {};
+  return await res.json() || {};
 }
 
-// --------------------
-// Process & average data
-// --------------------
 async function processGraphData() {
   const nodes = await getAllNodeData();
-
-  // day → element → list of values
   const monthData = {};
 
   for (let nodeName in nodes) {
     const node = nodes[nodeName];
     if (!node.Packets) continue;
 
-    for (let timestamp in node.Packets) {
-      const p = node.Packets[timestamp];
+    for (let t in node.Packets) {
+      const p = node.Packets[t];
+      if (!p.timestamp) continue;
 
-      const ts = new Date(p.timestamp);
-      const pktMonth = String(ts.getMonth() + 1).padStart(2, "0");
-      const pktDay = ts.getDate();
+      const d = new Date(p.timestamp);
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = d.getDate();
 
-      if (pktMonth !== month) continue;
+      if (m !== month) continue;
 
-      if (!monthData[pktDay]) monthData[pktDay] = {};
+      if (!monthData[day]) monthData[day] = {};
 
-      elements.forEach((el) => {
-        // Case-insensitive key finder
-        const firebaseKey = Object.keys(p).find(
-          (k) => k.toLowerCase() === el.toLowerCase()
-        );
-
-        if (firebaseKey) {
-          if (!monthData[pktDay][el]) monthData[pktDay][el] = [];
-          monthData[pktDay][el].push(Number(p[firebaseKey]));
+      elements.forEach(el => {
+        if (p[el] !== undefined) {
+          if (!monthData[day][el]) monthData[day][el] = [];
+          monthData[day][el].push(Number(p[el]));
         }
       });
     }
   }
-
   return monthData;
 }
 
-// --------------------
-// Build Graph
-// --------------------
 async function buildGraph() {
   const data = await processGraphData();
+  const days = Object.keys(data).map(Number).sort((a,b)=>a-b);
 
-  const days = Object.keys(data)
-    .map((d) => Number(d))
-    .sort((a, b) => a - b);
+  const datasets = elements.map((el, i) => {
+    const offset = i * verticalSeparation;
 
-  // Create datasets
-  const datasets = elements.map((el) => {
     return {
       label: el,
-      data: days.map((day) => {
-        const vals = data[day]?.[el] || [];
-        if (vals.length === 0) return null;
-
-        // Average
-        let avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-
-        // Larger vertical separation
-        let offset = elements.indexOf(el) * verticalSeparation;
-
-        return avg + offset;
+      data: days.map(day => {
+        const v = data[day]?.[el];
+        if (!v || v.length === 0) return null;
+        return (v.reduce((a,b)=>a+b,0) / v.length) + offset;
       }),
       borderColor: colorMap[el] || "#000",
-      backgroundColor: colorMap[el] || "#000",
       borderWidth: 2,
-      tension: 0.3,
-      spanGaps: true
+      tension: 0.25,
+      spanGaps: true,
+      pointRadius: 0
     };
   });
 
-  const ctx = document.getElementById("myChart").getContext("2d");
+  const ctx = document.getElementById("myChart");
 
   if (chart) chart.destroy();
 
   chart = new Chart(ctx, {
     type: "line",
-    data: {
-      labels: days,
-      datasets: datasets
-    },
+    data: { labels: days, datasets },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false,   // 🔴 REQUIRED
+      layout: {
+        padding: { top: 2, bottom: 2, left: 2, right: 2 }
+      },
       scales: {
         x: {
-          title: { display: true, text: "Day of Month" },
-          grid: { display: true }
+          ticks: { maxTicksLimit: 10 }
         },
         y: {
-          title: { display: true, text: "Values" },
-          beginAtZero: false,
-          grace: 10
+          ticks: { display: false },
+          grid: { display: false }
         }
       },
       plugins: {
-        legend: { position: "top" }
+        legend: {
+          position: "top",
+          labels: {
+            boxWidth: 10,
+            padding: 6,
+            font: { size: 10 }
+          }
+        }
       }
     }
   });
 }
 
 buildGraph();
+
