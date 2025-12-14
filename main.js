@@ -88,34 +88,69 @@ async function buildGraph() {
   chart = new Chart(ctx, {
     type: "line",
     data: { labels: days, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,   // 🔴 REQUIRED
-      layout: {
-        padding: { top: 2, bottom: 2, left: 2, right: 2 }
+  options: {
+  responsive: true,
+  maintainAspectRatio: false,
+
+  plugins: {
+    title: {
+      display: true,
+      text: "Soil Sensor Data (Daily Average)",
+      font: {
+        size: 12
       },
-      scales: {
-        x: {
-          ticks: { maxTicksLimit: 10 }
+      padding: {
+        top: 4,
+        bottom: 4
+      }
+    },
+    legend: {
+      display: true,
+      position: "top",
+      labels: {
+        font: {
+          size: 10
         },
-        y: {
-          ticks: { display: false },
-          grid: { display: false }
+        boxWidth: 10
+      }
+    }
+  },
+
+  scales: {
+    x: {
+      title: {
+        display: true,
+        text: "Day of the Month",
+        font: {
+          size: 10
         }
       },
-      plugins: {
-        legend: {
-          position: "top",
-          labels: {
-            boxWidth: 10,
-            padding: 6,
-            font: { size: 10 }
-          }
+      ticks: {
+        font: {
+          size: 9
+        }
+      }
+    },
+    y: {
+      title: {
+        display: true,
+        text: "Sensor Value",
+        font: {
+          size: 10
+        }
+      },
+      ticks: {
+        font: {
+          size: 9
         }
       }
     }
+  }
+}
+
   });
 }
 
 buildGraph();
+
 
