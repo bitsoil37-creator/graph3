@@ -92,65 +92,52 @@ async function buildGraph() {
   responsive: true,
   maintainAspectRatio: false,
 
-  plugins: {
-    title: {
-      display: true,
-      text: "Soil Sensor Data (Daily Average)",
-      font: {
-        size: 12
-      },
-      padding: {
-        top: 4,
-        bottom: 4
-      }
-    },
-    legend: {
-      display: true,
-      position: "top",
-      labels: {
-        font: {
-          size: 10
-        },
-        boxWidth: 10
-      }
+  title: {                     // ✅ V2 CORRECT LOCATION
+    display: true,
+    text: "Soil Sensor Data (Daily Average)",
+    fontSize: 12,
+    padding: 6
+  },
+
+  legend: {
+    display: true,
+    position: "top",
+    labels: {
+      boxWidth: 10,
+      fontSize: 10
     }
   },
 
   scales: {
-    x: {
-      title: {
+    xAxes: [{
+      scaleLabel: {            // ✅ V2 X AXIS TITLE
         display: true,
-        text: "Day of the Month",
-        font: {
-          size: 10
-        }
+        labelString: "Day of the Month",
+        fontSize: 10
       },
       ticks: {
-        font: {
-          size: 9
-        }
+        fontSize: 9,
+        maxTicksLimit: 10
       }
-    },
-    y: {
-      title: {
+    }],
+    yAxes: [{
+      scaleLabel: {            // ✅ V2 Y AXIS TITLE
         display: true,
-        text: "Sensor Value",
-        font: {
-          size: 10
-        }
+        labelString: "Sensor Value",
+        fontSize: 10
       },
       ticks: {
-        font: {
-          size: 9
-        }
+        fontSize: 9
       }
-    }
+    }]
   }
 }
+
 
   });
 }
 
 buildGraph();
+
 
 
