@@ -1,22 +1,17 @@
-body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #f9f9f9;
-}
-
-h1 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 20px;
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
 }
 
 .chart-container {
-    width: 90%;
-    max-width: 900px;
-    height: 400px; /* Slightly smaller graph */
-    margin: 0 auto;
-    background: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    height: 230px;
+    width: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+canvas {
+    height: 100% !important;
+    width: 100% !important;
 }
