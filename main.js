@@ -1,15 +1,21 @@
+// --------------------
+// URL Parameters
+// --------------------
 const url = new URL(window.location.href);
 const user = url.searchParams.get("user");
 const month = url.searchParams.get("month");
-const elements = url.searchParams.get("elements")?.split(",") || [];
+const elements = url.searchParams.get("elements")?.split(",").map(e => e.trim().toLowerCase()) || [];
 
+// Firebase URL
 const firebaseBase =
   "https://soilbitchina-default-rtdb.firebaseio.com/Users/" +
   user +
   "/Farm/Nodes";
 
+// Chart instance
 let chart;
 
+// Fixed colors per element
 const colorMap = {
   moisture: "#1E88E5",
   ph: "#D81B60",
@@ -21,66 +27,98 @@ const colorMap = {
   salinity: "#5D4037"
 };
 
-const verticalSeparation = 0.6;
+// Vertical separation constant (adjust to make lines more separated)
+const verticalSeparation = 0.5;
 
+// --------------------
+// Fetch all nodes for selected user
+// --------------------
 async function getAllNodeData() {
   const res = await fetch(firebaseBase + ".json");
-  return await res.json() || {};
+  const data = await res.json();
+  return data || {};
 }
 
+// --------------------
+// Process & average data
+// --------------------
 async function processGraphData() {
   const nodes = await getAllNodeData();
+
+  // day → element → list of values
   const monthData = {};
 
-  for (let node in nodes) {
-    if (!nodes[node].Packets) continue;
+  for (let nodeName in nodes) {
+    const node = nodes[nodeName];
+    if (!node.Packets) continue;
 
-    for (let k in nodes[node].Packets) {
-      const p = nodes[node].Packets[k];
-      if (!p.timestamp) continue;
+    for (let timestamp in node.Packets) {
+      const p = node.Packets[timestamp];
 
-      const d = new Date(p.timestamp);
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = d.getDate();
+      const ts = new Date(p.timestamp);
+      const pktMonth = String(ts.getMonth() + 1).padStart(2, "0");
+      const pktDay = ts.getDate();
 
-      if (m !== month) continue;
+      if (pktMonth !== month) continue;
 
-      if (!monthData[day]) monthData[day] = {};
+      if (!monthData[pktDay]) monthData[pktDay] = {};
 
-      elements.forEach(el => {
-        if (p[el] !== undefined) {
-          if (!monthData[day][el]) monthData[day][el] = [];
-          monthData[day][el].push(Number(p[el]));
+      elements.forEach((el) => {
+        // Case-insensitive key finder
+        const firebaseKey = Object.keys(p).find(
+          (k) => k.toLowerCase() === el.toLowerCase()
+        );
+
+        if (firebaseKey) {
+          if (!monthData[pktDay][el]) monthData[pktDay][el] = [];
+          monthData[pktDay][el].push(Number(p[firebaseKey]));
         }
       });
     }
   }
+
   return monthData;
 }
 
+// --------------------
+// Build Graph
+// --------------------
 async function buildGraph() {
   const data = await processGraphData();
-  const days = Object.keys(data).map(Number).sort((a,b)=>a-b);
 
-  const datasets = elements.map((el, i) => {
-    const offset = i * verticalSeparation;
+  const days = Object.keys(data)
+    .map((d) => Number(d))
+    .sort((a, b) => a - b);
+
+  // Create datasets
+  const datasets = elements.map((el) => {
     return {
       label: el,
-      data: days.map(d => {
-        const v = data[d]?.[el];
-        if (!v) return null;
-        return v.reduce((a,b)=>a+b,0)/v.length + offset;
+      data: days.map((day) => {
+        const vals = data[day]?.[el] || [];
+        if (vals.length === 0) return null;
+
+        // Average
+        let avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+
+        // Larger vertical separation
+        let offset = elements.indexOf(el) * verticalSeparation;
+
+        return avg + offset;
       }),
       borderColor: colorMap[el] || "#000",
-      fill: false,
-      lineTension: 0.25,
-      pointRadius: 0,
+      backgroundColor: colorMap[el] || "#000",
+      borderWidth: 2,
+      tension: 0.3,
       spanGaps: true
     };
   });
 
   const ctx = document.getElementById("myChart").getContext("2d");
+
   if (chart) chart.destroy();
+
+ // ... (keep all existing code above the chart creation)
 
   chart = new Chart(ctx, {
     type: "line",
@@ -88,63 +126,56 @@ async function buildGraph() {
       labels: days,
       datasets: datasets
     },
- // ... rest of your code remains the same ...
-
-chart = new Chart(ctx, {
-    type: "line",
-    data: {
-        labels: days,
-        datasets: datasets
-    },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
-
-        // FIXED: Title should be configured like this in Chart.js v2
-        title: {
-            display: true,
-            text: "Soil Sensor Data (Daily Average)",
-            fontSize: 12,
-            padding: 4
-        },
-
-        legend: {
-            display: true,
-            position: "top",
-            labels: {
-                boxWidth: 10,
-                fontSize: 10
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: { 
+            display: true, 
+            text: "Day of Month",
+            font: {
+              size: 10
             }
+          },
+          grid: { display: true },
+          ticks: {
+            font: {
+              size: 9
+            }
+          }
         },
-
-        scales: {
-            xAxes: [{
-                scaleLabel: {
-                    display: true,
-                    labelString: "Day of the Month",
-                    fontSize: 10
-                },
-                ticks: {
-                    fontSize: 9,
-                    maxTicksLimit: 10
-                }
-            }],
-            yAxes: [{
-                scaleLabel: {
-                    display: true,
-                    labelString: "Sensor Value",
-                    fontSize: 10
-                },
-                ticks: {
-                    fontSize: 9
-                }
-            }]
+        y: {
+          title: { 
+            display: true, 
+            text: "Values",
+            font: {
+              size: 10
+            }
+          },
+          beginAtZero: false,
+          grace: 10,
+          ticks: {
+            font: {
+              size: 9
+            }
+          }
         }
+      },
+      plugins: {
+        legend: { 
+          position: "top",
+          labels: {
+            font: {
+              size: 10
+            },
+            boxWidth: 12,
+            padding: 8
+          }
+        }
+      }
     }
-});
-
-// ... rest of your code ...
+  });
 }
 
 buildGraph();
-
