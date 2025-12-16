@@ -27,9 +27,6 @@ const colorMap = {
   salinity: "#5D4037"
 };
 
-// Vertical separation constant (adjust to make lines more separated)
-const verticalSeparation = 0.5;
-
 // --------------------
 // Fetch all nodes for selected user
 // --------------------
@@ -90,35 +87,44 @@ async function buildGraph() {
     .map((d) => Number(d))
     .sort((a, b) => a - b);
 
-  // Create datasets
+  // Create datasets with different point sizes for EC and salinity
   const datasets = elements.map((el) => {
+    const rawData = days.map((day) => {
+      const vals = data[day]?.[el] || [];
+      if (vals.length === 0) return null;
+      return vals.reduce((a, b) => a + b, 0) / vals.length;
+    });
+
+    // Set different point sizes for EC and salinity
+    let pointRadius = 2; // Default size for other elements
+    let pointHoverRadius = 4; // Default hover size
+    
+    if (el === 'ec') {
+      pointRadius = 5; // Bigger points for EC
+      pointHoverRadius = 7;
+    } else if (el === 'salinity') {
+      pointRadius = 2; // Smaller points for salinity
+      pointHoverRadius = 4;
+    }
+
     return {
       label: el,
-      data: days.map((day) => {
-        const vals = data[day]?.[el] || [];
-        if (vals.length === 0) return null;
-
-        // Average
-        let avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-
-        // Larger vertical separation
-        let offset = elements.indexOf(el) * verticalSeparation;
-
-        return avg + offset;
-      }),
+      data: rawData,
       borderColor: colorMap[el] || "#000",
       backgroundColor: colorMap[el] || "#000",
       borderWidth: 2,
       tension: 0.3,
-      spanGaps: true
+      spanGaps: true,
+      pointRadius: pointRadius,
+      pointHoverRadius: pointHoverRadius,
+      pointBorderWidth: 1,
+      pointBackgroundColor: colorMap[el] || "#000"
     };
   });
 
   const ctx = document.getElementById("myChart").getContext("2d");
 
   if (chart) chart.destroy();
-
- // ... (keep all existing code above the chart creation)
 
   chart = new Chart(ctx, {
     type: "line",
@@ -172,7 +178,33 @@ async function buildGraph() {
             boxWidth: 12,
             padding: 8
           }
+        },
+        tooltip: {
+          mode: 'nearest', // Only shows the closest dataset
+          intersect: false, // Shows tooltip even if not directly on a point
+          callbacks: {
+            // Show only one label at a time
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              label += context.parsed.y.toFixed(2);
+              return label;
+            },
+            // Custom title to show day
+            title: function(tooltipItems) {
+              if (tooltipItems.length > 0) {
+                return `Day ${tooltipItems[0].label}`;
+              }
+              return '';
+            }
+          }
         }
+      },
+      interaction: {
+        mode: 'nearest', // Interact with nearest point
+        intersect: false
       }
     }
   });
