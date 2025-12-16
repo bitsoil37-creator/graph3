@@ -1,17 +1,24 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #ffffff;
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #f9f9f9;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 18px;
 }
 
 .chart-container {
-  height: 230px;
-  width: 100%;
-  padding: 4px;
-  box-sizing: border-box;
-}
-
-canvas {
-  width: 100% !important;
-  height: 100% !important;
+    width: 90%;
+    max-width: 900px;
+    height: 230px; /* Changed to 230px as requested */
+    margin: 0 auto;
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
