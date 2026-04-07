@@ -6,9 +6,15 @@ const user = url.searchParams.get("user");
 const month = url.searchParams.get("month");
 let month = url.searchParams.get("month");
 
-// Normalize month to 2-digit format
+// Normalize safely
 if (month) {
-  month = String(parseInt(month, 10)).padStart(2, "0");
+  const parsed = parseInt(month, 10);
+  if (!isNaN(parsed)) {
+    month = String(parsed).padStart(2, "0");
+  } else {
+    console.error("Invalid month:", month);
+    return;
+  }
 }
 const elements = url.searchParams.get("elements")?.split(",").map(e => e.trim().toLowerCase()) || [];
 
