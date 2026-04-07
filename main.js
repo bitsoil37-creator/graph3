@@ -3,7 +3,13 @@
 // --------------------
 const url = new URL(window.location.href);
 const user = url.searchParams.get("user");
-const month = url.searchParams.get("month");
+let month = url.searchParams.get("month");
+
+// Normalize month to 2-digit format
+if (month) {
+  month = String(month).padStart(2, "0");
+}
+
 const elements = url.searchParams.get("elements")?.split(",").map(e => e.trim().toLowerCase()) || [];
 
 // Firebase URL
